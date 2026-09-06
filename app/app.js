@@ -198,7 +198,76 @@ app.use((req, res, next) => {
 // Application APIs
 // --------------------------------------------------
 
+app.delete("/orders/:orderId", (req, res) => {
+  const { username, password } = req.body;
+  const { orderId } = req.params;
 
+  console.log("Delete order request: ", username , ": ", password , ": ", orderId)
+
+  // Validate request
+  if (!username || !password || !orderId) {
+    logError(
+      "Username, password and order ID are required",
+      req.path,
+      req.body
+    );
+
+    return res.status(400).json({
+      error: "Username, password and order ID are required"
+    });
+  }
+
+  // Authenticate user
+  const user = authenticateUser(username, password);
+
+  if (!user) {
+    logError(
+      "Invalid username or password",
+      req.path,
+      req.body
+    );
+
+    return res.status(401).json({
+      error: "Invalid username or password"
+    });
+  }
+
+  // Read existing orders
+  const orders = readOrders();
+
+  console.log("Order details as: ", JSON.stringify(orders))
+
+  // Find the order
+  const orderIndex = orders.findIndex(
+    order =>
+      String(order.id) === String(orderId) &&
+      order.username === username
+  );
+
+  // Order not found or doesn't belong to user
+  if (orderIndex === -1) {
+    logError(
+      "Order not found or does not belong to user",
+      req.path,
+      req.body
+    );
+
+    return res.status(404).json({
+      error: "Order not found"
+    });
+  }
+
+  // Remove order
+  const deletedOrder = orders.splice(orderIndex, 1)[0];
+
+  // Save updated orders
+  saveOrders(orders);
+
+  res.status(200).json({
+    message: "Order deleted successfully",
+    order: deletedOrder
+  });
+});
 
 
 app.post("/ordercreate", (req, res) => {

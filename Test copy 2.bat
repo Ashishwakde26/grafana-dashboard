@@ -12,21 +12,8 @@ REM Temporary file used to store /orders API response
 set "ordersResponseFile=%TEMP%\orders_response.json"
 
 echo ============================================================
-echo REGISTERING INITIAL USERS
-echo ============================================================
-echo.
-
-:registerLoop
-if !registerCount! LSS 20 (
-    call :registerUser
-    timeout /t 1 /nobreak >nul
-    goto registerLoop
-)
-
-echo.
-echo ============================================================
-echo ALL USERS REGISTERED
-echo STARTING LOAD TEST
+echo API LOAD TEST STARTED
+echo Maximum registrations: 20
 echo ============================================================
 echo.
 
@@ -47,6 +34,16 @@ REM ============================================================
 
 set /a apiType=%random% %% 10
 
+REM ============================================================
+REM REGISTER API
+REM ============================================================
+
+if !registerCount! LSS 20 (
+if !apiType!==9 (
+call :registerUser
+goto wait
+)
+)
 
 REM ============================================================
 REM LOGIN API
@@ -408,23 +405,9 @@ REM --------------------------------------------------------
 REM CALL DELETE ORDER API
 REM --------------------------------------------------------
 
-echo.
-echo ============================================================
-echo DELETE API CALLED
-echo ===========================================================================================================================================
-echo Order ID : !selectedOrderId!
-echo Username : !username!
-echo Time     : %date% %time%
-echo ============================================================
-echo.
-
 curl -s -X DELETE "http://localhost:3000/orders/!selectedOrderId!" ^
     -H "Content-Type: application/json" ^
     -d "{\"username\":\"!username!\",\"password\":\"!password!\"}"
-
-echo.
-echo DELETE REQUEST COMPLETED
-echo.
 
 echo.
 goto wait
