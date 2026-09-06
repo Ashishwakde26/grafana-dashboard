@@ -332,6 +332,30 @@ for /f "delims=" %%I in ('powershell -NoProfile -Command "$json=Get-Content -Raw
 
 
 REM --------------------------------------------------------
+REM SKIP DELETE IF NO ORDER FOUND
+REM --------------------------------------------------------
+
+if not defined selectedOrderId (
+    echo.
+    echo ============================================================
+    echo DELETE SKIPPED - NO VALID ORDER ID FOUND
+    echo User : !deleteOrderOwner!
+    echo ============================================================
+    echo.
+    goto wait
+)
+
+if "!selectedOrderId!"=="" (
+    echo.
+    echo ============================================================
+    echo DELETE SKIPPED - EMPTY ORDER ID
+    echo User : !deleteOrderOwner!
+    echo ============================================================
+    echo.
+    goto wait
+)
+
+REM --------------------------------------------------------
 REM CHECK WHETHER AN ORDER WAS FOUND
 REM --------------------------------------------------------
 
