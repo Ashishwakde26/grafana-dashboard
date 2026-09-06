@@ -198,37 +198,47 @@ app.use((req, res, next) => {
 // Application APIs
 // --------------------------------------------------
 
+
+// Get all orders (no authentication required)
+app.get("/allorders", (req, res) => {
+  const orders = readOrders();
+  res.status(200).json(orders);
+});
+
+
+app.get("/randomorderid", (req, res) => {
+  const orders = readOrders();
+
+  if (!orders || orders.length === 0) {
+    return res.status(404).json({
+      message: "No orders found"
+    });
+  }
+
+  const randomOrder = orders[Math.floor(Math.random() * orders.length)];
+
+  res.status(200).json({
+    orderId: randomOrder.id
+  });
+});
+
+
 app.delete("/orders/:orderId", (req, res) => {
-  const { username, password } = req.body;
+//  const { username, password } = req.body;
   const { orderId } = req.params;
 
-  console.log("Delete order request: ", username , ": ", password , ": ", orderId)
+  console.log("Delete order request: ", orderId)
 
   // Validate request
-  if (!username || !password || !orderId) {
+  if (!orderId) {
     logError(
-      "Username, password and order ID are required",
+      "order ID is required",
       req.path,
       req.body
     );
 
     return res.status(400).json({
-      error: "Username, password and order ID are required"
-    });
-  }
-
-  // Authenticate user
-  const user = authenticateUser(username, password);
-
-  if (!user) {
-    logError(
-      "Invalid username or password",
-      req.path,
-      req.body
-    );
-
-    return res.status(401).json({
-      error: "Invalid username or password"
+      error: "order ID is required"
     });
   }
 
@@ -240,8 +250,7 @@ app.delete("/orders/:orderId", (req, res) => {
   // Find the order
   const orderIndex = orders.findIndex(
     order =>
-      String(order.id) === String(orderId) &&
-      order.username === username
+      String(order.id) === String(orderId) 
   );
 
   // Order not found or doesn't belong to user

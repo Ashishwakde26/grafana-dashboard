@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1788707330311,
+    "username": "Manish",
+    "order": {
+      "product": "Keyboard",
+      "quantity": 2,
+      "amount": 5000
+    },
+    "createdAt": "2026-09-06T15:08:50.311Z"
+  },
+  {
+    "id": 1788707334361,
+    "username": "Darshit",
+    "order": {
+      "product": "Laptop",
+      "quantity": 1,
+      "amount": 75000
+    },
+    "createdAt": "2026-09-06T15:08:54.362Z"
+  }
+]

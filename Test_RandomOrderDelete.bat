@@ -12,8 +12,21 @@ REM Temporary file used to store /orders API response
 set "ordersResponseFile=%TEMP%\orders_response.json"
 
 echo ============================================================
-echo API LOAD TEST STARTED
-echo Maximum registrations: 20
+echo REGISTERING INITIAL USERS
+echo ============================================================
+echo.
+
+:registerLoop
+if !registerCount! LSS 20 (
+    call :registerUser
+    timeout /t 1 /nobreak >nul
+    goto registerLoop
+)
+
+echo.
+echo ============================================================
+echo ALL USERS REGISTERED
+echo STARTING LOAD TEST
 echo ============================================================
 echo.
 
@@ -34,16 +47,6 @@ REM ============================================================
 
 set /a apiType=%random% %% 10
 
-REM ============================================================
-REM REGISTER API
-REM ============================================================
-
-if !registerCount! LSS 20 (
-if !apiType!==9 (
-call :registerUser
-goto wait
-)
-)
 
 REM ============================================================
 REM LOGIN API
@@ -280,140 +283,64 @@ REM ============================================================
 
 if !apiType!==9 (
 
-
-REM --------------------------------------------------------
-REM SELECT A VALID USER
-REM --------------------------------------------------------
-
-call :selectUser
-
-REM Save the correct credentials because these are required
-REM to retrieve the user's orders.
-set "deleteOrderOwner=!username!"
-set "deleteOrderPassword=!password!"
-
-
-REM --------------------------------------------------------
-REM GET ORDERS FOR THIS USER
-REM
-REM We intentionally use VALID credentials here so that
-REM we can obtain a real order_id.
-REM --------------------------------------------------------
-
-echo.
-echo [%date% %time%] POST /orders - FETCH ORDERS FOR DELETE - User: !deleteOrderOwner!
-
-curl -s -X POST "http://localhost:3000/orders" ^
-    -H "Content-Type: application/json" ^
-    -d "{\"username\":\"!deleteOrderOwner!\",\"password\":\"!deleteOrderPassword!\"}" ^
-    -o "!ordersResponseFile!"
-
-
-REM --------------------------------------------------------
-REM RANDOMLY SELECT ORDER ID FROM RESPONSE
-REM
-REM Supports:
-REM
-REM 1. [ {"order_id":"123"}, {"order_id":"456"} ]
-REM
-REM 2. { "orders": [ {"order_id":"123"} ] }
-REM
-REM 3. order property named "id"
-REM --------------------------------------------------------
+REM ============================================================
+REM GET RANDOM ORDER ID
+REM ============================================================
 
 set "selectedOrderId="
+set "randomOrderResponse=%TEMP%\randomOrderResponse.json"
 
-for /f "delims=" %%I in ('powershell -NoProfile -Command "$json=Get-Content -Raw -LiteralPath ''!ordersResponseFile!'' | ConvertFrom-Json; $orders=if($json.orders){$json.orders}else{$json}; if($orders -isnot [array]){$orders=@($orders)}; $valid=$orders | Where-Object { $_.order_id -or $_.id }; if($valid.Count -gt 0){ $selected=$valid | Get-Random; if($selected.order_id){$selected.order_id}else{$selected.id} }"') do (
+curl -s "http://localhost:3000/randomorderid" -o "%randomOrderResponse%"
+
+for /f "delims=" %%I in ('
+powershell -NoProfile -Command ^
+"$json = Get-Content -Raw '%randomOrderResponse%' | ConvertFrom-Json; if($json.orderId){$json.orderId}"
+') do (
     set "selectedOrderId=%%I"
 )
 
-
-REM --------------------------------------------------------
-REM CHECK WHETHER AN ORDER WAS FOUND
-REM --------------------------------------------------------
-
 if not defined selectedOrderId (
-
     echo.
-    echo [%date% %time%] DELETE /orders - SKIPPED - No orders found for !deleteOrderOwner!
-
-    goto wait
+    echo [%date% %time%] NO ORDERS FOUND - SKIPPING DELETE
+    echo Response:
+    type "%randomOrderResponse%"
+    echo.
+    goto :AfterDelete
 )
 
+echo.
+echo ============================================================
+echo RANDOM ORDER SELECTED
+echo Order ID : %selectedOrderId%
+echo ============================================================
+echo.
+
+REM ============================================================
+REM DELETE SELECTED ORDER
+REM ============================================================
+
+echo [%date% %time%] DELETE ORDER %selectedOrderId%
+
+curl -s -X DELETE "http://localhost:3000/orders/%selectedOrderId%"
 
 echo.
-echo [%date% %time%] Selected Order ID: !selectedOrderId!
-echo [%date% %time%] Order Owner: !deleteOrderOwner!
-
-
-REM --------------------------------------------------------
-REM RANDOM DELETE AUTHENTICATION
-REM
-REM 0-6 = VALID
-REM 7-8 = INVALID PASSWORD
-REM 9   = INVALID USERNAME + PASSWORD
-REM --------------------------------------------------------
-
-set /a deleteAuthType=%random% %% 10
-
-
-REM --------------------------------------------------------
-REM VALID USERNAME + VALID PASSWORD
-REM --------------------------------------------------------
-
-if !deleteAuthType! LSS 7 (
-
-    set "username=!deleteOrderOwner!"
-    set "password=!deleteOrderPassword!"
-
-    echo.
-    echo [%date% %time%] DELETE /orders/!selectedOrderId! - VALID - User: !username!
-
-) else (
-
-    REM ----------------------------------------------------
-    REM INVALID AUTHENTICATION
-    REM ----------------------------------------------------
-
-    set /a invalidDeleteType=%random% %% 2
-
-    if !invalidDeleteType!==0 (
-
-        REM Correct username, incorrect password
-
-        set "username=!deleteOrderOwner!"
-        set "password=wrongPassword123"
-
-        echo.
-        echo [%date% %time%] DELETE /orders/!selectedOrderId! - INVALID PASSWORD - User: !username!
-
-    ) else (
-
-        REM Incorrect username and password
-
-        set "username=InvalidUser"
-        set "password=wrongPassword123"
-
-        echo.
-        echo [%date% %time%] DELETE /orders/!selectedOrderId! - INVALID USERNAME + PASSWORD
-
-    )
-)
-
-
-REM --------------------------------------------------------
-REM CALL DELETE ORDER API
-REM --------------------------------------------------------
-
-curl -s -X DELETE "http://localhost:3000/orders/!selectedOrderId!" ^
-    -H "Content-Type: application/json" ^
-    -d "{\"username\":\"!username!\",\"password\":\"!password!\"}"
-
+echo DELETE REQUEST COMPLETED
 echo.
+
+:AfterDelete
+
+REM ============================================================
+REM NEXT API CALLS CONTINUE HERE
+REM ============================================================
+
+echo [%date% %time%] CONTINUING LOAD TEST...
+
+
 goto wait
 
 
 )
+
 
 REM ============================================================
 REM WAIT 1 SECOND
