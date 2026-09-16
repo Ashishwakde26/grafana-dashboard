@@ -1,0 +1,11 @@
+aws_region         = "us-east-1"
+vpc_id             = "<--your vpc id>" # ← Your existing VPC
+public_subnet_cidr = "172.31.100.0/24"          # ← Choose a free CIDR inside your VPC
+# availability_zone      = "us-east-1a"               # optional
+key_name                 = "Monitoring-key"
+instance_type            = "t3.xlarge"
+root_volume_size         = 60
+allowed_ssh_cidrs        = ["223.233.87.38/32"] # ← Your public IP
+allowed_monitoring_cidrs = ["223.233.87.38/32"] # ← Your public IP
+project_name             = "kind-monitoring"
+grafana_admin_password   = "ChangeMeToSomethingStrong!"

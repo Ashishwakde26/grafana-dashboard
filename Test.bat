@@ -179,7 +179,10 @@ if "%ORDERID%"=="" (
 
 echo DELETE /orders/%ORDERID%
 
-curl -s -X DELETE "%URL%/orders/%ORDERID%"
+
+curl -s -X DELETE "%URL%/orders" ^
+ -H "Content-Type: application/json" ^
+ -d "{\"orderId\":\"%ORDERID%\"}"
 
 goto WAIT
 

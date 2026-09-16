@@ -223,9 +223,9 @@ app.get("/randomorderid", (req, res) => {
 });
 
 
-app.delete("/orders/:orderId", (req, res) => {
+app.delete("/orders", (req, res) => {
 //  const { username, password } = req.body;
-  const { orderId } = req.params;
+  const { orderId } = req.body;
 
   console.log("Delete order request: ", orderId)
 
