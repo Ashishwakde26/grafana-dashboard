@@ -66,4 +66,4 @@ echo.
 echo =================================================
 echo STEP 10 - Port Forward
 echo =================================================
-kubectl port-forward service/nodejs-app-service 3000:3000
+kubectl port-forward service/nodejs-app-service 3000:3000 --address=0.0.0.0

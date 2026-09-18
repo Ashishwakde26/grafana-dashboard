@@ -1,5 +1,5 @@
 aws_region         = "us-east-1"
-vpc_id             = "<--your vpc id>" # ← Your existing VPC
+vpc_id             = "vpc-005077a535098b53d" # ← Your existing VPC
 public_subnet_cidr = "172.31.100.0/24"          # ← Choose a free CIDR inside your VPC
 # availability_zone      = "us-east-1a"               # optional
 key_name                 = "Monitoring-key"
