@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set URL=http://localhost:3000
+set URL=http://3.93.57.179:3000
 
 echo ============================================================
 echo REGISTERING INITIAL USERS
@@ -166,7 +166,7 @@ echo GET /randomorderid
 
 set ORDERID=
 
-for /f %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod 'http://localhost:3000/randomorderid').orderId"') do (
+for /f %%i in ('powershell -NoProfile -Command "(Invoke-RestMethod 'http://3.93.57.179:3000/randomorderid').orderId"') do (
     set ORDERID=%%i
 )
 

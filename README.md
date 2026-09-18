@@ -1,30 +1,5 @@
 # Install Git, Docker & Kind on AWS EC2 Linux
 
-Complete guide to install **Git**, **Docker**, and **Kind** (Kubernetes in Docker) on an AWS EC2 Linux instance.
-
-**Supported AMIs:**
-- Amazon Linux 2
-- Amazon Linux 2023
-- Ubuntu 20.04 / 22.04 / 24.04
-
----
-
-## Prerequisites
-
-- Running EC2 instance
-- SSH access
-- Outbound internet access
-
-### Connect to the instance
-
-```bash
-# Amazon Linux
-ssh -i your-key.pem ec2-user@<EC2-PUBLIC-IP>
-
-# Ubuntu
-ssh -i your-key.pem ubuntu@<EC2-PUBLIC-IP>
-```
-
 ---
 
 ## 1. Update the System
@@ -158,53 +133,6 @@ kubectl version --client
 
 ---
 
-## Quick Verification
-
-```bash
-git --version
-docker --version
-docker ps
-kind version
-kubectl version --client
-```
-
----
-
-## Create a Kind Cluster
-
-### Simple cluster
-```bash
-kind create cluster
-```
-
-### Multi-node cluster
-
-Create a config file:
-
-```yaml
-# kind-config.yaml
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-  - role: control-plane
-  - role: worker
-  - role: worker
-```
-
-Then create the cluster:
-```bash
-kind create cluster --config kind-config.yaml
-```
-
-### Useful Kind commands
-```bash
-kind get clusters          # List clusters
-kind delete cluster        # Delete default cluster
-kind delete cluster --name <name>
-```
-
----
-
 ## Notes
 
 - After adding the user to the `docker` group, you **must** log out and log back in.
@@ -225,6 +153,135 @@ kind delete cluster --name <name>
 | Kind     | `kind get clusters`            | List Kind clusters              |
 | Kind     | `kind delete cluster`          | Delete the default cluster      |
 | kubectl  | `kubectl get nodes`            | List nodes in the cluster       |
+
+---
+
+
+---
+
+## 6. Install Helm
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+helm version
+```
+
+---
+
+## 7. Add Prometheus Community Helm Repository
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+
+---
+
+## 8. Create Monitoring Namespace
+
+```bash
+kubectl create namespace monitoring
+```
+
+---
+
+## 9. Install kube-prometheus-stack
+
+```bash
+helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring
+```
+
+Verify installation:
+
+```bash
+kubectl get pods -n monitoring
+```
+
+Wait until all monitoring pods are in the `Running` state.
+
+---
+
+## 10. Access Monitoring Applications by port forwarding
+
+### Prometheus
+
+```bash
+nohup kubectl port-forward \
+  -n monitoring \
+  svc/monitoring-kube-prometheus-prometheus \
+  9090:9090 \
+  --address=0.0.0.0 \
+  > prometheus-port-forward.log 2>&1 &
+```
+
+```text
+http://<EC2-PUBLIC-IP>:9090
+```
+
+---
+
+### Alertmanager
+
+```bash
+nohup kubectl port-forward \
+  -n monitoring \
+  svc/monitoring-kube-prometheus-alertmanager \
+  9093:9093 \
+  --address=0.0.0.0 \
+  > alertmanager-port-forward.log 2>&1 &
+```
+
+
+```text
+http://<EC2-PUBLIC-IP>:9093
+```
+
+---
+
+### Grafana
+
+```bash
+nohup kubectl port-forward \
+  -n monitoring \
+  svc/monitoring-grafana \
+  3001:80 \
+  --address=0.0.0.0 \
+  > grafana-port-forward.log 2>&1 &
+```
+
+```text
+http://<EC2-PUBLIC-IP>:3001
+```
+
+---
+
+## 11. Retrieve Grafana Username and Password
+
+```bash
+echo "Username:"
+kubectl get secret -n monitoring monitoring-grafana -o jsonpath="{.data.admin-user}" | base64 --decode
+echo
+
+echo "Password:"
+kubectl get secret -n monitoring monitoring-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+echo
+```
+
+---
+
+## 12. Validate Monitoring Stack
+
+```bash
+kubectl get pods -n monitoring
+kubectl get svc -n monitoring
+```
+
+Ensure:
+
+- Prometheus is accessible on port `9090`
+- Alertmanager is accessible on port `9093`
+- Grafana is accessible on port `3001`
+- All monitoring pods are in `Running` state
 
 ---
 
