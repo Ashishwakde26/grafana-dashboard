@@ -288,5 +288,12 @@ Ensure:
 
 ---
 
+<img width="1558" height="775" alt="image" src="https://github.com/user-attachments/assets/89f20745-5ace-4327-bc3b-3f904af221d4" />
+
+
+<img width="1602" height="884" alt="image" src="https://github.com/user-attachments/assets/cf49422d-603c-4dcc-b082-90e096c5797d" />
+
+
+
 **Happy Coding!** 🚀
 ```
