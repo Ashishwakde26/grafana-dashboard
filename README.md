@@ -1,5 +1,8 @@
 # Install Git, Docker & Kind on AWS EC2 Linux
 
+<img width="1558" height="698" alt="image" src="https://github.com/user-attachments/assets/06c8cb20-7ad6-4da9-92fa-545f78161231" />
+
+
 ---
 
 ## 1. Update the System
